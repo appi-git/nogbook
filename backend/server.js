@@ -1,7 +1,8 @@
 const http = require("http");
 
-const jsonPath = process.env.JSON_PATH
-const jsonKey = process.env.EDIT_KEY
+const port = process.env.PORT;
+const jsonPath = process.env.JSON_PATH;
+const jsonKey = process.env.EDIT_KEY;
 const readKey = process.env.READ_KEY;
 const writeKey = process.env.WRITE_KEY;
 
@@ -100,7 +101,7 @@ const server = http.createServer((req,res)=>{
     }
 })
 
-server.listen(3000,()=>{
+server.listen(port,()=>{
     console.log("running")
     readJson()
 });
