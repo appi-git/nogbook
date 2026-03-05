@@ -1,17 +1,17 @@
 const http = require("http");
-const fs = require("fs");
 
 const jsonPath = 'https://jsonhosting.com/api/json/021a0909';
 const jsonKey = '97c03ab4c526c505de3a6cd936c4f6a3d253c13497580f75212c3614e8da87d1';
 let recieveData = '';
 let shareData;
+const readKey = "read.key";
+const writeKey = "write.key";
 
 function readJson(){
     fetch(jsonPath+"/raw",{method:"GET"})
     .then(response=>{return response.json()})
     .then(data=>shareData=data)
 }
-
 function writeJson(){
     fetch(jsonPath,{
         method:"PUT",
@@ -26,20 +26,38 @@ function writeJson(){
         .then(response=>response.text())
         .then(text=>text ? JSON.parse(text) : null)
         .catch(err => console.error(err));
-    console.log("done")
+    console.log("wJ finished")
 }
-
-function appendObject(obj1,obj2){
+function appendItem(obj1,obj2){
     readJson()
     const keys = Object.keys(obj1);
     obj1[keys.length] = obj2;
     writeJson()
 }
-readJson()
+function deleteItem(obj,index){
+    readJson()
+    const valueArray = Object.values(obj)
+    valueArray.splice(index,1)
+    newObj={}
+    valueArray.forEach((value,index)=>{
+        newObj[index]=value;
+    })
+    shareData = newObj
+    writeJson()
+}
+function userAuth(key){
+    if(key===readKey){
+        return "visitor";
+    } else if(key===writeKey){
+        return "editor"
+    } else{
+        return "unknown"
+    }
+}
 
 const server = http.createServer((req,res)=>{
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS,DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') {
         res.writeHead(204)
@@ -64,20 +82,24 @@ const server = http.createServer((req,res)=>{
         })
         req.on('end', () => {
             recieveData=JSON.parse(body)
-            appendObject(shareData,recieveData);
-            readJson();
-            res.end(JSON.stringify(shareData));
+            if(req.url==="/auth"){
+                res.end(userAuth(recieveData.userInput))
+            }else{
+                appendItem(shareData,recieveData);
+                readJson();
+                res.end(JSON.stringify(shareData));
+            }
         });
+    } else if(req.method==="DELETE"){
+        res.writeHead(200)
+        noteId = req.url.slice(7)
+        deleteItem(shareData,noteId)
+        readJson()
+        res.end(JSON.stringify(shareData))
     }
 })
 
-server.listen(3001,()=>{
+server.listen(3000,()=>{
     console.log("running")
+    readJson()
 });
-
-const dataUpdate = setInterval(()=>{
-    if(recieveData!=''){
-        recieveData='';
-    }
-}, 100)
-
