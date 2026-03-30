@@ -26,20 +26,22 @@ function updateHeaderBox(obj){
 }
 function checkAuth(auth=user){
     if(auth==="editor"){
-        authBox.style.display="none"
-        inputBox.style.display="block"
-        headerBox.style.display="flex"
-        history.pushState({page:"home"},'')
+        authBox.style.display="none";
+        inputBox.style.display="block";
+        headerBox.style.display="flex";
     } else if(auth==="visitor"){
         inputBox.style.display="none";
         deleteButton.style.display="none";
-        authBox.style.display="none"
+        authBox.style.display="none" 
         headerBox.style.display="flex";
-        history.pushState({page:"home"},'')
     } else if(auth==="unknown"){
         inputBox.style.display="none";
         headerBox.style.display="none";
-        authBox.style.display="block"
+        authBox.style.display="block";
+    }
+    if(auth=="editor"||auth=="visitor"){
+        history.pushState({page:"home"},'',"#/home")
+        document.body.style.justifyContent = "flex-start";
     }
     sessionStorage.setItem("auth",auth)
 }
@@ -117,6 +119,7 @@ submitKey.addEventListener("click",()=>{
         .then(data=>{
             user = data;
             checkAuth()
+            refreshButton.click()
         })
     key.value =""
 })
