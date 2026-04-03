@@ -53,14 +53,25 @@ input{
 label{
     font-size: 100%;
 }
-#key-submit{
+
+#dwyw{
     margin-top:15px;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+#key-submit{
     height:2em;
     width:20vw;
     font-size:6vw;
     border-radius:5%;
     border: 4px black solid;
 }
+#twyw{
+    margin-top:5%;
+    font-size:4vw;
+}
+
 
 #buttons-div{
     margin-top: 5px;

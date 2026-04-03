@@ -14,8 +14,15 @@ const bodyBox = document.getElementById("body");
 const noteDisplay = document.getElementById("note-view");
 const noteHead = document.getElementById("note-head");
 const noteBody = document.getElementById("note-body");
+const loadingText = document.getElementById("twyw")
 
-let user = sessionStorage.getItem("auth") ?? "unknown"
+let authkey = sessionStorage.getItem("authkey") ?? "unset"
+
+const divDisplay ={
+    editor:{write:"block",read:"flex",auth:"none"},
+    visitor:{write:"none",read:"flex",auth:"none"},
+    unknown:{write:"none",read:"none",auth:"block"}
+}
 
 function updateHeaderBox(obj){
     headerBox.innerHTML = '';
@@ -27,27 +34,46 @@ function updateHeaderBox(obj){
         headerBox.innerHTML+=`<div class="note-preview" id="note-${entryNum}">${obj[entryNum].head}</div>`
     })
 }
-function checkAuth(auth=user){
-    if(auth==="editor"){
-        authBox.style.display="none";
-        inputBox.style.display="block";
-        headerBox.style.display="flex";
-    } else if(auth==="visitor"){
-        inputBox.style.display="none";
-        deleteButton.style.display="none";
-        authBox.style.display="none" 
-        headerBox.style.display="flex";
-    } else if(auth==="unknown"){
-        inputBox.style.display="none";
-        headerBox.style.display="none";
-        authBox.style.display="block";
-    }
-    if(auth=="editor"||auth=="visitor"){
-        history.pushState({page:"home"},'',"#/home")
-        document.body.style.justifyContent = "flex-start";
-    }
-    sessionStorage.setItem("auth",auth)
+function checkAuth(keyValue=authkey){
+    inputBox.style.display="none";
+    headerBox.style.display="none";
+    authBox.style.display="block";
+    fetch(`${server}/auth`,{
+        method:"POST",
+        body:JSON.stringify({userInput:keyValue})
+    })
+        .then(response=>response.text())
+        .then(access=>{
+            authBox.style.display=divDisplay[access].auth;
+            inputBox.style.display=divDisplay[access].write;
+            headerBox.style.display=divDisplay[access].read;
+        })
+    sessionStorage.setItem("authkey",keyValue)
 }
+async function ping(){
+    try{
+        const response = await fetch(server)
+        return (response.ok)
+    } catch(err){
+        console.log(err)
+        return false
+    }
+}
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+async function wyWait(){
+    let serverUp = false;
+    let n=0;
+    while(!serverUp){
+        if(n==0){loadingText.innerText="Connecting"}
+        else if(n>0){loadingText.innerText+="."}
+        if(n==3){n=-1}
+        serverUp = await ping();
+        n++;
+        await sleep(500)
+    }
+    loadingText.innerText="Connected!"
+}
+
 
 headerBox.addEventListener("click",(e)=>{
     console.log('clicked')
@@ -114,19 +140,12 @@ const authBox = document.getElementById("auth-box");
 const key = document.getElementById("key-input")
 const submitKey= document.getElementById("key-submit")
 submitKey.addEventListener("click",()=>{
-    fetch(`${server}/auth`,{
-        method:"POST",
-        body:JSON.stringify({userInput:key.value})
-    })
-        .then(response=>response.text())
-        .then(data=>{
-            user = data;
-            checkAuth()
-            refreshButton.click()
-        })
+    checkAuth(key.value)
     key.value =""
 })
 
 history.replaceState({page:"auth"},'',"#/auth")
 checkAuth()
 refreshButton.click()
+wyWait()
+
