@@ -19,9 +19,9 @@ const loadingText = document.getElementById("twyw")
 let authkey = sessionStorage.getItem("authkey") ?? "unset"
 
 const divDisplay ={
-    editor:{write:"block",read:"flex",auth:"none"},
-    visitor:{write:"none",read:"flex",auth:"none"},
-    unknown:{write:"none",read:"none",auth:"block"}
+    editor:{write:"block",read:"flex",auth:"none",deleteBtn:"block"},
+    visitor:{write:"none",read:"flex",auth:"none",deleteBtn:"none"},
+    unknown:{write:"none",read:"none",auth:"block",deleteBtn:"none"}
 }
 
 function updateHeaderBox(obj){
@@ -34,10 +34,14 @@ function updateHeaderBox(obj){
         headerBox.innerHTML+=`<div class="note-preview" id="note-${entryNum}">${obj[entryNum].head}</div>`
     })
 }
-function checkAuth(keyValue=authkey){
+function readKey(keyValue){
+}
+async function checkAuth(keyValue=authkey){
+    console.log(keyValue)
     inputBox.style.display="none";
     headerBox.style.display="none";
     authBox.style.display="block";
+    let access = "unknown";
     fetch(`${server}/auth`,{
         method:"POST",
         body:JSON.stringify({userInput:keyValue})
@@ -47,8 +51,12 @@ function checkAuth(keyValue=authkey){
             authBox.style.display=divDisplay[access].auth;
             inputBox.style.display=divDisplay[access].write;
             headerBox.style.display=divDisplay[access].read;
+            deleteButton.style.display=divDisplay[access].deleteBtn;
+            if (access!="unknown"){
+                sessionStorage.setItem("authkey",keyValue)
+                history.pushState({page:"home"},'',"#/home")
+            }
         })
-    sessionStorage.setItem("authkey",keyValue)
 }
 async function ping(){
     try{
