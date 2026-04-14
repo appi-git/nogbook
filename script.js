@@ -17,7 +17,7 @@ const noteBody = document.getElementById("note-body");
 const loadingText = document.getElementById("twyw")
 
 let authkey = sessionStorage.getItem("authkey") ?? "unset"
-
+let preloaded = sessionStorage.getItem("preloaded") ?? false
 const divDisplay ={
     editor:{write:"block",read:"flex",auth:"none",deleteBtn:"block"},
     visitor:{write:"none",read:"flex",auth:"none",deleteBtn:"none"},
@@ -34,13 +34,12 @@ function updateHeaderBox(obj){
         headerBox.innerHTML+=`<div class="note-preview" id="note-${entryNum}">${obj[entryNum].head}</div>`
     })
 }
-function readKey(keyValue){
-}
-async function checkAuth(keyValue=authkey){
+function checkAuth(keyValue=authkey){
     console.log(keyValue)
     inputBox.style.display="none";
     headerBox.style.display="none";
-    authBox.style.display="block";
+    authBox.style.display=(preloaded) ? "none":"block";
+    if(!preloaded){sessionStorage.setItem("preloaded",true)}
     let access = "unknown";
     fetch(`${server}/auth`,{
         method:"POST",
@@ -64,8 +63,8 @@ async function ping(){
         return (response.ok)
     } catch(err){
         console.log(err)
-        return false
     }
+    return false
 }
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function wyWait(){
@@ -74,7 +73,7 @@ async function wyWait(){
     while(!serverUp){
         if(n==0){loadingText.innerText="Connecting"}
         else if(n>0){loadingText.innerText+="."}
-        if(n==3){n=-1}
+        if(n==2){n=-1}
         serverUp = await ping();
         n++;
         await sleep(500)
@@ -153,7 +152,6 @@ submitKey.addEventListener("click",()=>{
 })
 
 history.replaceState({page:"auth"},'',"#/auth")
-checkAuth()
 refreshButton.click()
 wyWait()
 
