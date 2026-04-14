@@ -16,8 +16,9 @@ const noteHead = document.getElementById("note-head");
 const noteBody = document.getElementById("note-body");
 const loadingText = document.getElementById("twyw")
 
-let authkey = sessionStorage.getItem("authkey") ?? "unset"
 let preloaded = sessionStorage.getItem("preloaded") ?? false
+let authkey = (preloaded) ? sessionStorage.getItem("authkey") : "unset";
+
 const divDisplay ={
     editor:{write:"block",read:"flex",auth:"none",deleteBtn:"block"},
     visitor:{write:"none",read:"flex",auth:"none",deleteBtn:"none"},
@@ -36,10 +37,11 @@ function updateHeaderBox(obj){
 }
 function checkAuth(keyValue=authkey){
     console.log(keyValue)
+    sessionStorage.setItem("authkey",keyValue)
     inputBox.style.display="none";
     headerBox.style.display="none";
     authBox.style.display=(preloaded) ? "none":"block";
-    if(!preloaded){sessionStorage.setItem("preloaded",true)}
+    if(!preloaded){sessionStorage.setItem("preloaded",true);preloaded=true}
     let access = "unknown";
     fetch(`${server}/auth`,{
         method:"POST",
@@ -52,17 +54,19 @@ function checkAuth(keyValue=authkey){
             headerBox.style.display=divDisplay[access].read;
             deleteButton.style.display=divDisplay[access].deleteBtn;
             if (access!="unknown"){
+                authkey=keyValue
                 sessionStorage.setItem("authkey",keyValue)
                 history.pushState({page:"home"},'',"#/home")
             }
         })
+    refreshButton.click()
 }
 async function ping(){
     try{
         const response = await fetch(server)
         return (response.ok)
     } catch(err){
-        console.log(err)
+        console.error(err)
     }
     return false
 }
@@ -74,16 +78,17 @@ async function wyWait(){
         if(n==0){loadingText.innerText="Connecting"}
         else if(n>0){loadingText.innerText+="."}
         if(n==2){n=-1}
+        n++
         serverUp = await ping();
-        n++;
         await sleep(500)
     }
     loadingText.innerText="Connected!"
+    
 }
 
 
 headerBox.addEventListener("click",(e)=>{
-    console.log('clicked')
+    console.log(sessionStorage)
     if (event.target===event.currentTarget){
         return
     }
@@ -109,7 +114,7 @@ window.addEventListener('popstate', (event) => {
     } else if(event.state.page==="note-display"){
         inputBox.style.display="none";
         headerBox.style.display="none";
-        noteDisplay.style.display="";
+        noteDisplay.style.display="block";
     } else{
         console.log(event.state)
     }
@@ -152,7 +157,5 @@ submitKey.addEventListener("click",()=>{
 })
 
 history.replaceState({page:"auth"},'',"#/auth")
-refreshButton.click()
 checkAuth()
 wyWait()
-
