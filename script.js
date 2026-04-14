@@ -153,5 +153,6 @@ submitKey.addEventListener("click",()=>{
 
 history.replaceState({page:"auth"},'',"#/auth")
 refreshButton.click()
+checkAuth()
 wyWait()
 
